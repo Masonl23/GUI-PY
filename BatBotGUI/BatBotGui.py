@@ -70,7 +70,7 @@ class Widget(QWidget):
         self.setWindowTitle("Bat Bot 7 GUI")
         
         # add status layout
-        self.add_status_layout()
+        # self.add_status_layout()
         
         # add experiment box
         self.add_experiment_layout()
@@ -85,32 +85,32 @@ class Widget(QWidget):
         self.setLayout(self.mainVLay)
         
 #----------------------------------------------------------------------
-    def add_status_layout(self):
-        """Adds the status box layout"""
-        self.statusBox = QGroupBox("Status")
-        statusHLay = QHBoxLayout()
+    # def add_status_layout(self):
+    #     """Adds the status box layout"""
+    #     self.statusBox = QGroupBox("Status")
+    #     statusHLay = QHBoxLayout()
         
-        # create status labels
-        self.sonarStatusL = QLabel("Sonar: disconnected")
-        self.gpsStatusL = QLabel("GPS: disconnected")
-        self.leftEarStatusL = QLabel("Left Ear: disconnected")
-        self.rightEarStatusL = QLabel("Right Ear: disconnected")
-        # add to layout
-        statusHLay.addWidget(self.sonarStatusL)
-        statusHLay.addWidget(self.gpsStatusL)
-        statusHLay.addWidget(self.leftEarStatusL)
-        statusHLay.addWidget(self.rightEarStatusL)
+    #     # create status labels
+    #     self.sonarStatusL = QLabel("Sonar: disconnected")
+    #     self.gpsStatusL = QLabel("GPS: disconnected")
+    #     self.leftEarStatusL = QLabel("Left Ear: disconnected")
+    #     self.rightEarStatusL = QLabel("Right Ear: disconnected")
+    #     # add to layout
+    #     statusHLay.addWidget(self.sonarStatusL)
+    #     statusHLay.addWidget(self.gpsStatusL)
+    #     statusHLay.addWidget(self.leftEarStatusL)
+    #     statusHLay.addWidget(self.rightEarStatusL)
         
-        # create search button
-        self.searchSPIDevsPB = QPushButton("Search")
-        self.searchSPIDevsPB.pressed.connect(self.searchSPIDevsPB_callback)
+    #     # create search button
+    #     self.searchSPIDevsPB = QPushButton("Search")
+    #     self.searchSPIDevsPB.pressed.connect(self.searchSPIDevsPB_callback)
 
-        statusHLay.addWidget(self.searchSPIDevsPB)
+    #     statusHLay.addWidget(self.searchSPIDevsPB)
         
     
-        self.statusBox.setLayout(statusHLay)
+    #     self.statusBox.setLayout(statusHLay)
         
-        self.mainVLay.addWidget(self.statusBox)
+    #     self.mainVLay.addWidget(self.statusBox)
 
     def searchSPIDevsPB_callback(self):
         logging.debug("searchSPIDevsPB called")
@@ -424,19 +424,28 @@ class Widget(QWidget):
         vLay.addLayout(minAngleSBHlay)
         vLay.addLayout(angleSliderBHlay)
         vLay.addLayout(maxAngleSBHlay)
+
         
         self.bothControlBox.setLayout(vLay)
+        # gridLay  = [
+        #     QGridLayout(),
+        #     QGridLayout(),
+        #     QGridLayout(),
+        #     QGridLayout(),
+        #     QGridLayout(),
+        #     QGridLayout(),
+        # ]
+
+        # hLay = QHBoxLayout()
+
+        # for i, lay in enumerate(gridLay):
+        #     lay.addWidget(self.bothMinAngleSB[i],0,0)
+        #     lay.addWidget(self.bothMaxAngleSB[i],0,1)
+        #     lay.addWidget(self.bothAngleSlider[i],1,0,1,2)
+        #     hLay.addLayout(lay)
         
-        # gridLay = QGridLayout()
-        # gridLay.setSpacing(10)
-        # gridLay.setHorizontalSpacing(5)
-        # gridLay.setColumnStretch(0,5)
-        # gridLay.addWidget(self.bothMinAngleSB[0],0,0,1,1)
-        # gridLay.addWidget(self.bothAngleSlider[0],0,1,5,1)
-        # gridLay.addWidget(self.bothAngleSB[0],2,0)
-        # gridLay.addWidget(self.bothMaxAngleSB[0],4,0,1,1)
-            
-        # self.bothControlBox.setLayout(gridLay)
+        # self.bothControlBox.setLayout(hLay)
+        
         
         
     def init_singleEarTab(self):
