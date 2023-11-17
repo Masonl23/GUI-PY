@@ -24,6 +24,11 @@ import serial
 import serial.tools.list_ports
 import time
 import spidev
+import numpy as np
+from ctypes import c_int32
+
+def int32(val):
+    return c_int32(val).value
 
 # logging stuff
 import logging
@@ -40,6 +45,10 @@ class Widget(QWidget):
     row2 = None
     allMotorsBox = None
     instructionsBox = None
+    
+    spiBus = 0
+    spiDev = 0
+    spi = spidev.SpiDev()
     
     def __init__(self):
         QWidget.__init__(self)
@@ -68,14 +77,14 @@ class Widget(QWidget):
     def add_spi_layout(self):
         """Adds the serial box layout"""
         # box container
-        serialGB = QGroupBox("Serial")
+        serialGB = QGroupBox("SPI")
         hLay = QHBoxLayout()
 
         # search port button
-        self.searchSerialPortPB = QPushButton("Search")
-        self.searchSerialPortPB.setFixedWidth(65)
-        self.searchSerialPortPB.setToolTip("Click to search for SPI..")
-        hLay.addWidget(self.searchSerialPortPB)
+        self.searchSPIPortPB = QPushButton("Search")
+        self.searchSPIPortPB.setFixedWidth(65)
+        self.searchSPIPortPB.setToolTip("Click to search for SPI..")
+        hLay.addWidget(self.searchSPIPortPB)
 
         # add horizontal layout to box
         serialGB.setLayout(hLay)
@@ -85,10 +94,14 @@ class Widget(QWidget):
 
         # push box to main layout
         self.mainVerticalLayout.addWidget(serialGB)
+        
+        self.spi.open(self.spiBus,self.spiDev)
+        self.spi.mode = 0
+        self.spi.max_speed_hz = 500000
 
         # connect callbacks
-        self.serialObj = None
-        self.isSerialObjConnected = False
+        # ~ self.serialObj = None
+        # ~ self.isSerialObjConnected = False
 
 
     def add_indiviual_motor_control_box(self):
@@ -549,7 +562,7 @@ class Widget(QWidget):
             )
             logging.debug("slider value chagned")
             # self.motorAngleSliders[index].setSliderPosition(int(self.motorAngleSB[index].value()))
-            self.writeIndividualSerialData()
+            self.writeAllSPIData()
 
     def motorAngleSliders_valueChanged_callback(self, index):
         """When value is changed this gets called"""
@@ -559,7 +572,7 @@ class Widget(QWidget):
                 int(self.motorAngleSliders[index].value())
             )
             logging.debug("SB value chagned")
-            self.writeIndividualSerialData()
+            self.writeAllSPIData()
 
     def minMotorAngleSB_editingFinished_callback(self, index):
         """When min limits are changed"""
@@ -580,18 +593,6 @@ class Widget(QWidget):
     def setNewMotorZeroPB_pressed_callback(self, index):
         """User requests that current angle be set as the zero point"""
 
-        if self.serialObj is not None and self.serialObj.is_open:
-            logging.debug(f"setMotorZero {index}")
-            # command microcontroller to make zero
-            if self.serialObj is not None and self.serialObj.is_open:
-                dataStr = b"zero " + str(index).encode() + b" \r"
-                self.serialObj.write(dataStr)
-
-            # set values to zero
-            self.motorAngleSB[index].setValue(0)
-            self.motorAngleSliders[index].setValue(0)
-        else:
-            logging.error("setNewMotorZero failed to send data")
 
     # ---------------------------------------------------------------------------------
     # all motor control callbacks
@@ -600,14 +601,14 @@ class Widget(QWidget):
         if self.allMotorAngleSB.value() != self.allMotorAngleSlider.value():
             self.allMotorAngleSlider.setValue(self.allMotorAngleSB.value())
             logging.debug("allMotorAngleSB called")
-            self.writeAllSerialData()
+            self.writeAllSPIData()
 
     def allMotorAngleSlider_valueChanged_callback(self):
         """when slider value is changed"""
         if self.allMotorAngleSB.value() != self.allMotorAngleSlider.value():
             self.allMotorAngleSB.setValue(self.allMotorAngleSlider.value())
             logging.debug("allMotorAngleSlider called")
-            self.writeAllSerialData()
+            self.writeAllSPIData()
 
     def allMinMotorAngleSB_editingFinished_callback(self):
         """when all min value changes"""
@@ -637,29 +638,29 @@ class Widget(QWidget):
     def startInstPB_pressed_callback(self):
         """processes input table for usable data and sends to microcontroller"""
         logging.debug("startInstPB callback")
-        if self.serialObj is not None and self.serialObj.is_open:
-            if not self.instructionThreadRunning:
-                dataArray = []
-                for row in range(self.inputT.rowCount()):
-                    rowStr = ""
-                    for col in range(6):
-                        curItem = self.inputT.item(row,col)
-                        rowStr += curItem.text()
-                        if col != 5:
-                            rowStr+=" "
-                    rowStr += "\r"
+        # ~ if self.serialObj is not None and self.serialObj.is_open:
+            # ~ if not self.instructionThreadRunning:
+                # ~ dataArray = []
+                # ~ for row in range(self.inputT.rowCount()):
+                    # ~ rowStr = ""
+                    # ~ for col in range(6):
+                        # ~ curItem = self.inputT.item(row,col)
+                        # ~ rowStr += curItem.text()
+                        # ~ if col != 5:
+                            # ~ rowStr+=" "
+                    # ~ rowStr += "\r"
 
-                    dataArray.append(rowStr.encode())
-                # print(dataArray)
-                self.instructionThread = RunInstructionsThread(dataArray,self.timeStepSB.value(),self.serialObj)
-                self.instructionThread.start()
-                self.instructionThreadRunning = True
-                self.startInstPB.setText("Stop")
-            else:
-                self.instructionThreadRunning = False
-                self.startInstPB.setText("Start")
-                if self.instructionThread is not None and self.instructionThread.isRunning():
-                    self.instructionThread.stop()
+                    # ~ dataArray.append(rowStr.encode())
+                # ~ # print(dataArray)
+                # ~ self.instructionThread = RunInstructionsThread(dataArray,self.timeStepSB.value(),self.serialObj)
+                # ~ self.instructionThread.start()
+                # ~ self.instructionThreadRunning = True
+                # ~ self.startInstPB.setText("Stop")
+            # ~ else:
+                # ~ self.instructionThreadRunning = False
+                # ~ self.startInstPB.setText("Start")
+                # ~ if self.instructionThread is not None and self.instructionThread.isRunning():
+                    # ~ self.instructionThread.stop()
                 
     def copyCurAnglesPB_pressed_callback(self):
         """Copies the current angles into table row"""
@@ -771,17 +772,20 @@ class Widget(QWidget):
 
     def writeIndividualSerialData(self):
         """Sends data to microcontroller via serial port"""
-        if self.serialObj is not None and self.serialObj.is_open:
-            dataStr = self.getSerialWriteString()
-            self.serialObj.write(dataStr)
-            logging.info(f"sent individual serial data")
+        # ~ if self.serialObj is not None and self.serialObj.is_open:
+            # ~ dataStr = self.getSerialWriteString()
+            # ~ self.serialObj.write(dataStr)
+            # ~ logging.info(f"sent individual serial data")
 
-    def writeAllSerialData(self):
-        if self.serialObj is not None and self.serialObj.is_open:
-            dataStr = b"all " + str(self.allMotorAngleSB.value()).encode() + b" \r"
-            self.serialObj.write(dataStr)
-            logging.info(f"Sent all serial data")
-
+    def writeAllSPIData(self):
+        """writes all spi data to device"""
+        writeData = np.zeros(6).astype(np.int32)
+        for i, sb in enumerate(self.motorAngleSB):
+            writeData[i] = int32(sb.value())
+            
+        data_to_send = writeData.astype(np.uint8).tobytes()
+        self.spi.xfer(data_to_send)
+        
     def getSerialWriteString(self):
         """Gets the angles of each spinner and makes into string
         that can be sent"""
@@ -823,9 +827,9 @@ class Widget(QWidget):
             self.serialThread.stop()
             
         # check if serial object has been created and try to close it
-        if self.serialObj is not None:
-            self.serialObj.close()
-            logging.debug("Serial object is closed")
+        # ~ if self.serialObj is not None:
+            # ~ self.serialObj.close()
+            # ~ logging.debug("Serial object is closed")
 
         event.accept()
 
