@@ -648,29 +648,26 @@ class Widget(QWidget):
     def startInstPB_pressed_callback(self):
         """processes input table for usable data and sends to microcontroller"""
         logging.debug("startInstPB callback")
-        # ~ if self.serialObj is not None and self.serialObj.is_open:
-            # ~ if not self.instructionThreadRunning:
-                # ~ dataArray = []
-                # ~ for row in range(self.inputT.rowCount()):
-                    # ~ rowStr = ""
-                    # ~ for col in range(6):
-                        # ~ curItem = self.inputT.item(row,col)
-                        # ~ rowStr += curItem.text()
-                        # ~ if col != 5:
-                            # ~ rowStr+=" "
-                    # ~ rowStr += "\r"
+        
 
-                    # ~ dataArray.append(rowStr.encode())
-                # ~ # print(dataArray)
-                # ~ self.instructionThread = RunInstructionsThread(dataArray,self.timeStepSB.value(),self.serialObj)
-                # ~ self.instructionThread.start()
-                # ~ self.instructionThreadRunning = True
-                # ~ self.startInstPB.setText("Stop")
-            # ~ else:
-                # ~ self.instructionThreadRunning = False
-                # ~ self.startInstPB.setText("Start")
-                # ~ if self.instructionThread is not None and self.instructionThread.isRunning():
-                    # ~ self.instructionThread.stop()
+        if not self.instructionThreadRunning:
+             dataArray = [bytearray(6) for _ in range(self.inputT.rowCount())]
+             for row in range(self.inputT.rowCount()):
+                 
+                 for col in range(6):
+                     curItem = self.inputT.item(row,col)
+                     dataArray[row,col] = np.int16(int(curItem.text()))
+                 
+             # print(dataArray)
+             self.instructionThread = RunInstructionsThread(dataArray,self.timeStepSB.value(),self.serialObj)
+             self.instructionThread.start()
+             self.instructionThreadRunning = True
+             self.startInstPB.setText("Stop")
+        else:
+             self.instructionThreadRunning = False
+             self.startInstPB.setText("Start")
+             if self.instructionThread is not None and self.instructionThread.isRunning():
+                 self.instructionThread.stop()
                 
     def copyCurAnglesPB_pressed_callback(self):
         """Copies the current angles into table row"""
@@ -857,19 +854,20 @@ class ReadSerialThread(QThread):
         self.terminate()
 
 class RunInstructionsThread(QThread):
-    def __init__(self,dataArray,freq,serialObj):
+    def __init__(self,dataArray,freq,spiObj):
         QThread.__init__(self)
         self.data = dataArray
         self.timeBetween = 1/freq
         self.runThread = True
         self.curIndex = 0
         self.maxIndex = len(dataArray)
-        self.serialObj = serialObj
+        self.spiObj = spiObj
         
     def run(self):
         logging.debug("RunInstructionsThread starting")
         while self.runThread:
-            self.serialObj.write(self.data[self.curIndex])
+            
+            self.spiObj.xfer2(self.data[self.curIndex])
             self.curIndex+=1
             if self.curIndex >= self.maxIndex:
                 self.curIndex = 0
