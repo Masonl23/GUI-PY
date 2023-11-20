@@ -23,13 +23,21 @@ import sys
 import serial
 import serial.tools.list_ports
 import time
-import spidev
 import numpy as np
-
 
 # logging stuff
 import logging
 logging.basicConfig(level=logging.DEBUG)
+
+try:
+    import spidev
+    useSpi = True
+except ImportError:
+    logging.error("no spidev found, developing on different os ")
+    useSpi = False
+
+
+
 
 
 class Widget(QWidget):
@@ -43,9 +51,10 @@ class Widget(QWidget):
     allMotorsBox = None
     instructionsBox = None
     
-    spiBus = 0
-    spiDev = 0
-    spi = spidev.SpiDev()
+    if useSpi:
+        spiBus = 0
+        spiDev = 0
+        spi = spidev.SpiDev()
     
     def __init__(self):
         QWidget.__init__(self)
@@ -92,9 +101,10 @@ class Widget(QWidget):
         # push box to main layout
         self.mainVerticalLayout.addWidget(serialGB)
         
-        self.spi.open(self.spiBus,self.spiDev)
-        self.spi.mode = 0
-        self.spi.max_speed_hz = 500000
+        if useSpi:
+            self.spi.open(self.spiBus,self.spiDev)
+            self.spi.mode = 0
+            self.spi.max_speed_hz = 500000
 
         # connect callbacks
         # ~ self.serialObj = None
@@ -768,6 +778,7 @@ class Widget(QWidget):
 
     def writeAllSPIData(self):
         """writes all spi data to device"""
+        logging.debug("writeAllSPIData")
         writeData = bytearray(12)
     
         writeData[0] = (self.motorAngleSB[0].value() >> 8) & 0xff
@@ -790,8 +801,10 @@ class Widget(QWidget):
         
 
         
-        logging.debug("writingSPI")
-        self.spi.xfer2(writeData)
+        if useSpi:
+            self.spi.xfer2(writeData)
+        else:
+            logging.debug("not on pi")
         
 
     def serialThread_emit_callback(self,dataIn):
