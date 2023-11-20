@@ -651,15 +651,32 @@ class Widget(QWidget):
         
 
         if not self.instructionThreadRunning:
-             dataArray = [bytearray(6) for _ in range(self.inputT.rowCount())]
+             # ~ dataArray = np.zeros((self.inputT.rowCount(),12),dtype=np.byte)
+             dataArray = [bytearray(12) for _ in range(self.inputT.rowCount())]
+             
              for row in range(self.inputT.rowCount()):
+                 val = int(self.inputT.item(row,0).text())
+                 dataArray[row][0] = (val >> 8) & 0xff
+                 dataArray[row][1] = val & 0xff
+                 val = int(self.inputT.item(row,1).text())
+                 dataArray[row][2] = (val >> 8) & 0xff
+                 dataArray[row][3] = val & 0xff
+                 val = int(self.inputT.item(row,2).text())
+                 dataArray[row][4] = (val >> 8) & 0xff
+                 dataArray[row][5] = val & 0xff
+                 val = int(self.inputT.item(row,3).text())
+                 dataArray[row][6] = (val >> 8) & 0xff
+                 dataArray[row][7] = val & 0xff
+                 val = int(self.inputT.item(row,4).text())
+                 dataArray[row][8] = (val >> 8) & 0xff
+                 dataArray[row][9] = val & 0xff
+                 val = int(self.inputT.item(row,5).text())
+                 dataArray[row][10] = (val >> 8) & 0xff
+                 dataArray[row][11] = val & 0xff
                  
-                 for col in range(6):
-                     curItem = self.inputT.item(row,col)
-                     dataArray[row,col] = np.int16(int(curItem.text()))
-                 
+        
              # print(dataArray)
-             self.instructionThread = RunInstructionsThread(dataArray,self.timeStepSB.value(),self.serialObj)
+             self.instructionThread = RunInstructionsThread(dataArray,self.timeStepSB.value(),self.spi)
              self.instructionThread.start()
              self.instructionThreadRunning = True
              self.startInstPB.setText("Stop")
@@ -779,7 +796,8 @@ class Widget(QWidget):
     def writeAllSPIData(self):
         """writes all spi data to device"""
         logging.debug("writeAllSPIData")
-        writeData = bytearray(12)
+        # ~ writeData = bytearray(12)
+        writeData = np.zeros(12,dtype=np.byte)
     
         writeData[0] = (self.motorAngleSB[0].value() >> 8) & 0xff
         writeData[1] = (self.motorAngleSB[0].value()) & 0xff
@@ -798,7 +816,7 @@ class Widget(QWidget):
         
         writeData[10] = (self.motorAngleSB[5].value() >> 8) & 0xff
         writeData[11] = (self.motorAngleSB[5].value()) & 0xff
-        
+        writeData = writeData.tolist()
 
     
         self.spi.xfer2(writeData)
