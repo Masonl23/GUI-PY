@@ -29,13 +29,13 @@ import numpy as np
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
+useFake = False
 try:
     import spidev
-    useSpi = True
 except ImportError:
     logging.error("no spidev found, developing on different os ")
-    useSpi = False
-
+    import fake_spidev
+    useFake = True
 
 
 
@@ -51,9 +51,12 @@ class Widget(QWidget):
     allMotorsBox = None
     instructionsBox = None
     
-    if useSpi:
-        spiBus = 0
-        spiDev = 0
+
+    spiBus = 0
+    spiDev = 0
+    if useFake:
+        spi = fake_spidev.SpiDev()
+    else:
         spi = spidev.SpiDev()
     
     def __init__(self):
@@ -101,10 +104,10 @@ class Widget(QWidget):
         # push box to main layout
         self.mainVerticalLayout.addWidget(serialGB)
         
-        if useSpi:
-            self.spi.open(self.spiBus,self.spiDev)
-            self.spi.mode = 0
-            self.spi.max_speed_hz = 500000
+
+        self.spi.open(self.spiBus,self.spiDev)
+        self.spi.mode = 0
+        self.spi.max_speed_hz = 500000
 
         # connect callbacks
         # ~ self.serialObj = None
@@ -800,11 +803,9 @@ class Widget(QWidget):
         writeData[11] = (self.motorAngleSB[5].value()) & 0xff
         
 
-        
-        if useSpi:
-            self.spi.xfer2(writeData)
-        else:
-            logging.debug("not on pi")
+    
+        self.spi.xfer2(writeData)
+
         
 
     def serialThread_emit_callback(self,dataIn):
