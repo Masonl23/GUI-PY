@@ -25,10 +25,7 @@ import serial.tools.list_ports
 import time
 import spidev
 import numpy as np
-from ctypes import c_int32
 
-def int32(val):
-    return c_int32(val).value
 
 # logging stuff
 import logging
@@ -52,7 +49,7 @@ class Widget(QWidget):
     
     def __init__(self):
         QWidget.__init__(self)
-        self.setGeometry(0, 0, 400, 400)
+        # ~ self.setGeometry(0, 0, 400, 400)
         self.setWindowTitle("Tendon Motor Controller")
 
         # main layout of system
@@ -769,41 +766,33 @@ class Widget(QWidget):
     # ---------------------------------------------------------------------------------
 
 
-
-    def writeIndividualSerialData(self):
-        """Sends data to microcontroller via serial port"""
-        # ~ if self.serialObj is not None and self.serialObj.is_open:
-            # ~ dataStr = self.getSerialWriteString()
-            # ~ self.serialObj.write(dataStr)
-            # ~ logging.info(f"sent individual serial data")
-
     def writeAllSPIData(self):
         """writes all spi data to device"""
-        writeData = np.zeros(6).astype(np.int32)
-        for i, sb in enumerate(self.motorAngleSB):
-            writeData[i] = int32(sb.value())
-            
-        data_to_send = writeData.astype(np.uint8).tobytes()
-        self.spi.xfer(data_to_send)
+        writeData = bytearray(12)
+    
+        writeData[0] = (self.motorAngleSB[0].value() >> 8) & 0xff
+        writeData[1] = (self.motorAngleSB[0].value()) & 0xff
         
-    def getSerialWriteString(self):
-        """Gets the angles of each spinner and makes into string
-        that can be sent"""
-        dataStr = (
-            str(self.motorAngleSB[0].value()).encode()
-            + b" "
-            + str(self.motorAngleSB[1].value()).encode()
-            + b" "
-            + str(self.motorAngleSB[2].value()).encode()
-            + b" "
-            + str(self.motorAngleSB[3].value()).encode()
-            + b" "
-            + str(self.motorAngleSB[4].value()).encode()
-            + b" "
-            + str(self.motorAngleSB[5].value()).encode()
-            + b" \r"
-        )
-        return dataStr
+        writeData[2] = (self.motorAngleSB[1].value() >> 8) & 0xff
+        writeData[3] = (self.motorAngleSB[1].value()) & 0xff
+            
+        writeData[4] = (self.motorAngleSB[2].value() >> 8) & 0xff
+        writeData[5] = (self.motorAngleSB[2].value()) & 0xff
+        
+        writeData[6] = (self.motorAngleSB[3].value() >> 8) & 0xff
+        writeData[7] = (self.motorAngleSB[3].value()) & 0xff
+        
+        writeData[8] = (self.motorAngleSB[4].value() >> 8) & 0xff
+        writeData[9] = (self.motorAngleSB[4].value()) & 0xff
+        
+        writeData[10] = (self.motorAngleSB[5].value() >> 8) & 0xff
+        writeData[11] = (self.motorAngleSB[5].value()) & 0xff
+        
+
+        
+        logging.debug("writingSPI")
+        self.spi.xfer2(writeData)
+        
 
     def serialThread_emit_callback(self,dataIn):
         self.serialOutputTE.append(dataIn)
