@@ -84,6 +84,7 @@ class Widget(QWidget):
         
         self.setLayout(self.mainVLay)
         
+        
 #----------------------------------------------------------------------
     # def add_status_layout(self):
     #     """Adds the status box layout"""
@@ -582,6 +583,7 @@ class Widget(QWidget):
         vLay.addLayout(gridLay)
 
 
+        # left pinnae spectogram
         hLay = QHBoxLayout()
         self.leftPinnaeSpec = MplCanvas(self,width=5,height=4,dpi=100)
         self.leftPinnaeSpec.axes.set_title("Left Pinnae")
@@ -608,6 +610,7 @@ class Widget(QWidget):
         hLay.addWidget(self.refreshRateSpecPlotsSB)
         
         # ---------------------------------------------
+        # right pinnae spectogram
         self.rightPinnaeSpec = MplCanvas(self,width=5,height=4,dpi=100)
         self.rightPinnaeSpec.axes.set_title("Right Pinnae")
         Time_difference = 0.0001
