@@ -1,3 +1,10 @@
+"""This is the old version of the GUI that controlled the tendons. This GUI interfaced with a grand central
+that emulated the Jetson Nano as a SPI host.
+
+For working tendon controller see TendonControllerSPI.py
+
+"""
+
 import typing
 from PyQt6.QtWidgets import (
     QApplication,

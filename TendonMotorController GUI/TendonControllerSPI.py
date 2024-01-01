@@ -1,3 +1,8 @@
+"""Current working tendon controller for the BatBot. This system works with SPI to control one pinnae.
+
+"""
+
+
 import typing
 from PyQt6.QtWidgets import (
     QApplication,

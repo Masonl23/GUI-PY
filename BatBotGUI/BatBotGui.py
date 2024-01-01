@@ -210,36 +210,99 @@ class Widget(QWidget):
 #----------------------------------------------------------------------
     def add_pinnaeControlBox_layout(self):
         """Adds the controls box layout"""
-        self.pinnaeControlBox = QGroupBox("Pinnae Control")
-        controlsHLay = QHBoxLayout()
+        # self.pinnaeControlBox = QGroupBox("Pinnae Control")
+        # controlsHLay = QHBoxLayout()
         
-        # create tabs for each ear mode
-        self.singleEarTab = QWidget()
-        self.dualEarTab = QWidget()
+        # # create tabs for each ear mode
+        # self.singleEarTab = QWidget()
+        # self.dualEarTab = QWidget()
         
-        # create tabs 
-        self.tabs = QTabWidget()
-        self.tabs.addTab(self.singleEarTab,"Single")
-        self.tabs.addTab(self.dualEarTab,"Dual")
+        # # create tabs 
+        # self.tabs = QTabWidget()
+        # self.tabs.addTab(self.singleEarTab,"Single")
+        # self.tabs.addTab(self.dualEarTab,"Dual")
         
-        # init left controls
-        self.init_leftControls()
-        # init right controls
-        self.init_rightControls()
+        # # init left controls
+        # self.init_leftControls()
+        # # init right controls
+        # self.init_rightControls()
         
-        # init box for both ears
-        self.init_bothControls()
+        # # init box for both ears
+        # self.init_bothControls()
 
-        # init sonar controls
+        # # init sonar controls
         
-        # init the tabs
-        self.init_singleEarTab()
-        self.init_dualEarTab()
+        # # init the tabs
+        # self.init_singleEarTab()
+        # self.init_dualEarTab()
         
         
-        controlsHLay.addWidget(self.tabs)
-        self.pinnaeControlBox.setLayout(controlsHLay)
-        self.mainVLay.addWidget(self.pinnaeControlBox)
+        # controlsHLay.addWidget(self.tabs)
+        # self.pinnaeControlBox.setLayout(controlsHLay)
+        # self.mainVLay.addWidget(self.pinnaeControlBox)
+
+
+        motor_GB = [
+            QGroupBox("Motor 1"),
+            QGroupBox("Motor 2"),
+            QGroupBox("Motor 3"),
+            QGroupBox("Motor 4"),
+            QGroupBox("Motor 5"),
+            QGroupBox("Motor 6")
+        ]
+
+        self.motor_max_PB = [
+            QPushButton("Max"),
+            QPushButton("Max"),
+            QPushButton("Max"),
+            QPushButton("Max"),
+            QPushButton("Max"),
+            QPushButton("Max"),
+        ]
+        
+        self.motor_min_PB = [
+            QPushButton("Min"),
+            QPushButton("Min"),
+            QPushButton("Min"),
+            QPushButton("Min"),
+            QPushButton("Min"),
+            QPushButton("Min"),
+        ]
+
+        self.motor_max_limit_SB = [
+            QSpinBox(),
+            QSpinBox(),
+            QSpinBox(),
+            QSpinBox(),
+            QSpinBox(),
+            QSpinBox()
+        ]
+
+        self.motor_min_limit_SB = [
+            QSpinBox(),
+            QSpinBox(),
+            QSpinBox(),
+            QSpinBox(),
+            QSpinBox(),
+            QSpinBox()
+        ]
+
+        self.motor_value_SB = [
+            QSpinBox(),
+            QSpinBox(),
+            QSpinBox(),
+            QSpinBox(),
+            QSpinBox(),
+            QSpinBox()
+        ]
+
+        
+
+
+
+
+
+
         
     def init_leftControls(self):
         """Creates box of left controls"""
