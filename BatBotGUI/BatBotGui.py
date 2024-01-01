@@ -76,7 +76,7 @@ class Widget(QWidget):
         self.add_experiment_layout()
 
         # add sonar and GPS controller box
-        self.add_sonarAndGPSBox()
+        self.Add_Sonar_Box()
 
         # add pinnae controls layout
         self.add_pinnaeControlBox_layout()
@@ -175,14 +175,19 @@ class Widget(QWidget):
         self.numADCSamplesSB.setValue(8000)
         gridLay2.addWidget(QLabel("Number ADC Samples:"),1,2)
         gridLay2.addWidget(self.numADCSamplesSB,1,3)
-        vLay.addLayout(gridLay2)
+        
+        hLay = QHBoxLayout()
+        hLay.addLayout(vLay)
+        hLay.addLayout(gridLay2)
+        
+        # vLay.addLayout(gridLay2)
 
         # start button 
         self.startCollectionPB = QPushButton("Start Collections")
         vLay.addWidget(self.startCollectionPB)
 
         
-        self.experimentBox.setLayout(vLay)
+        self.experimentBox.setLayout(hLay)
         self.mainVLay.addWidget(self.experimentBox)
 
     def get_current_experiment_time(self):
@@ -562,23 +567,24 @@ class Widget(QWidget):
     def init_echoControl_box(self):
         """Adds the sonar box layout"""
         self.sonarControlBox = QGroupBox("Echos")
+        self.sonarControlBox.setMinimumHeight(280)
         vLay = QVBoxLayout()
 
         gridLay = QGridLayout()
-        # show directory pulling from
-        self.echoPlotDirectoryCB = QComboBox()
-        self.echoPlotDirectoryCB.addItem(self.directoryTE.text() +self.experimentFolderNameTE.text()+"/gpsdata")
-        self.echoPlotDirectoryCB.setEditable(True)
-        self.echoPlotDirectoryCB.setSizePolicy(QSizePolicy.Policy.Expanding,QSizePolicy.Policy.Preferred)
-        gridLay.addWidget(QLabel("Plot Data:"),0,0)
-        gridLay.addWidget(self.echoPlotDirectoryCB,0,1)
+        # # show directory pulling from
+        # self.echoPlotDirectoryCB = QComboBox()
+        # self.echoPlotDirectoryCB.addItem(self.directoryTE.text() +self.experimentFolderNameTE.text()+"/gpsdata")
+        # self.echoPlotDirectoryCB.setEditable(True)
+        # self.echoPlotDirectoryCB.setSizePolicy(QSizePolicy.Policy.Expanding,QSizePolicy.Policy.Preferred)
+        # gridLay.addWidget(QLabel("Plot Data:"),0,0)
+        # gridLay.addWidget(self.echoPlotDirectoryCB,0,1)
         
-        # show plots found
-        self.plotsFoundLE = QLineEdit("0")
-        self.plotsFoundLE.setReadOnly(True)
+        # # show plots found
+        # self.plotsFoundLE = QLineEdit("0")
+        # self.plotsFoundLE.setReadOnly(True)
 
-        gridLay.addWidget(QLabel("Plots found:"),0,2)
-        gridLay.addWidget(self.plotsFoundLE,0,3)
+        # gridLay.addWidget(QLabel("Plots found:"),0,2)
+        # gridLay.addWidget(self.plotsFoundLE,0,3)
     
         vLay.addLayout(gridLay)
 
@@ -587,6 +593,7 @@ class Widget(QWidget):
         hLay = QHBoxLayout()
         self.leftPinnaeSpec = MplCanvas(self,width=5,height=4,dpi=100)
         self.leftPinnaeSpec.axes.set_title("Left Pinnae")
+        
         Time_difference = 0.0001
         Time_Array = np.linspace(0, 5, math.ceil(5 / Time_difference))
         Data = 20*(np.sin(3 * np.pi * Time_Array))
@@ -595,9 +602,12 @@ class Widget(QWidget):
 
 
         # middle section---------------------------------
+        hLay2 = QHBoxLayout()
+
         # plot check button
         self.plotSpecCB = QCheckBox("Plot")
-        hLay.addWidget(self.plotSpecCB)
+        # hLay.addWidget(self.plotSpecCB)
+        hLay2.addWidget(self.plotSpecCB)
 
         # refreshrate for plots
         self.refreshRateSpecPlotsSB = QDoubleSpinBox()
@@ -606,9 +616,13 @@ class Widget(QWidget):
         self.refreshRateSpecPlotsSB.setValue(1)
         self.refreshRateSpecPlotsSB.setDecimals(1)
  
-        hLay.addWidget(QLabel("Plot Every:"))
-        hLay.addWidget(self.refreshRateSpecPlotsSB)
-        
+        # hLay.addWidget(QLabel("Plot Every:"))
+        # hLay.addWidget(self.refreshRateSpecPlotsSB)
+        hLay2.addWidget(QLabel("Plot Every:"))
+        hLay2.addWidget(self.refreshRateSpecPlotsSB)
+
+        vLay.addLayout(hLay2)
+
         # ---------------------------------------------
         # right pinnae spectogram
         self.rightPinnaeSpec = MplCanvas(self,width=5,height=4,dpi=100)
@@ -646,11 +660,9 @@ class Widget(QWidget):
         self.gpsBox.setLayout(gridLay)
  
 
-    def add_sonarAndGPSBox(self):
+    def Add_Sonar_Box(self):
         """adds sonar and gps box"""
         self.init_echoControl_box()
-        # self.init_GPS_box()
-
 
         self.sonarAndGPSLay = QHBoxLayout()
         self.sonarAndGPSLay.addWidget(self.sonarControlBox)
