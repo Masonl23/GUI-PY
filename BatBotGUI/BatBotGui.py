@@ -39,6 +39,7 @@ import math
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy import signal
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from datetime import datetime 
@@ -56,6 +57,9 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 
+# frequency of dac and adc
+DAC_ADC_FREQ = 1e6
+
 class Widget(QWidget):
     """GUI for controlling Bat Bot"""
     
@@ -69,65 +73,33 @@ class Widget(QWidget):
         QWidget.__init__(self)
         self.setWindowTitle("Bat Bot 7 GUI")
         
-        # add status layout
-        # self.add_status_layout()
-        
         # add experiment box
-        self.add_experiment_layout()
+        self.Add_Experiment_GB()
 
         # add sonar and GPS controller box
-        self.Add_Sonar_Box()
+        self.Add_Echo_GB()
 
         # add pinnae controls layout
-        self.add_pinnaeControlBox_layout()
+        self.Add_Pinnae_Control_GB()
 
         
         self.setLayout(self.mainVLay)
         
-        
-#----------------------------------------------------------------------
-    # def add_status_layout(self):
-    #     """Adds the status box layout"""
-    #     self.statusBox = QGroupBox("Status")
-    #     statusHLay = QHBoxLayout()
-        
-    #     # create status labels
-    #     self.sonarStatusL = QLabel("Sonar: disconnected")
-    #     self.gpsStatusL = QLabel("GPS: disconnected")
-    #     self.leftEarStatusL = QLabel("Left Ear: disconnected")
-    #     self.rightEarStatusL = QLabel("Right Ear: disconnected")
-    #     # add to layout
-    #     statusHLay.addWidget(self.sonarStatusL)
-    #     statusHLay.addWidget(self.gpsStatusL)
-    #     statusHLay.addWidget(self.leftEarStatusL)
-    #     statusHLay.addWidget(self.rightEarStatusL)
-        
-    #     # create search button
-    #     self.searchSPIDevsPB = QPushButton("Search")
-    #     self.searchSPIDevsPB.pressed.connect(self.searchSPIDevsPB_callback)
-
-    #     statusHLay.addWidget(self.searchSPIDevsPB)
-        
-    
-    #     self.statusBox.setLayout(statusHLay)
-        
-    #     self.mainVLay.addWidget(self.statusBox)
-
-    def searchSPIDevsPB_callback(self):
-        logging.debug("searchSPIDevsPB called")
 
 #----------------------------------------------------------------------
-    def add_experiment_layout(self):
+    def Add_Experiment_GB(self):
         """Adds layout for where to save data for this experient"""
-        self.experimentBox = QGroupBox("Experiment Settings")
-        vLay = QVBoxLayout()
-
-        gridLay = QGridLayout()
+        self.experiment_settings_GB = QGroupBox("Experiment")
+        # -------------------------------------------------------------------
+        # directory groupbox
+        directory_grid = QGridLayout()        
+        directory_GB = QGroupBox("Directory Settings")
 
         # where to save directory
-        self.directoryTE = QLineEdit("/home/batbot/experiments/")
-        gridLay.addWidget(QLabel("Directory:"),0,0)
-        gridLay.addWidget(self.directoryTE,0,1)
+        self.directory_TE = QLineEdit("/home/batbot/experiments/")
+        self.directory_TE.setObjectName("directory_TE")
+        directory_grid.addWidget(QLabel("Directory:"),0,0)
+        directory_grid.addWidget(self.directory_TE,0,1)
 
         # name of experiment
         curExperiment = self.get_current_experiment_time()
@@ -135,79 +107,167 @@ class Widget(QWidget):
         self.setWindowTitle("BatBot 7 GUI:\t\t\t\t" + curExperiment)
         
         # set the name
-        self.experimentFolderNameTE = QLineEdit(curExperiment)
-        self.experimentFolderNameTE.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.experimentFolderNameTE.customContextMenuRequested.connect(self.experimentFolderNameTE_contextMenu)
+        self.experiment_folder_name_TE = QLineEdit(curExperiment)
+        self.experiment_folder_name_TE.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.experiment_folder_name_TE.customContextMenuRequested.connect(self.experiment_folder_name_TE_contextMenu)
         
-        gridLay.addWidget(QLabel("Experiment Folder:"),1,0)
-        gridLay.addWidget(self.experimentFolderNameTE,1,1)
-        vLay.addLayout(gridLay)
+        directory_grid.addWidget(QLabel("Experiment Folder:"),1,0)
+        directory_grid.addWidget(self.experiment_folder_name_TE,1,1)
+        directory_GB.setLayout(directory_grid)
         
+        # -------------------------------------------------------------------
         # settings for chirps
-        gridLay2 = QGridLayout()
+        chirp_GB = QGroupBox("Chirp && Listen Settings")
+        chirp_grid = QGridLayout()
         # start freq
-        self.startFreqSB = QSpinBox()
-        self.startFreqSB.setSuffix(" kHz")
-        self.startFreqSB.setValue(50)
-        self.startFreqSB.setRange(0,300)
-        gridLay2.addWidget(QLabel("Start Frequency:"),0,0)
-        gridLay2.addWidget(self.startFreqSB,0,1)
+        self.chirp_start_freq_SB = QSpinBox()
+        self.chirp_start_freq_SB.setSuffix(" kHz")
+        self.chirp_start_freq_SB.setValue(50)
+        self.chirp_start_freq_SB.setRange(0,300)
+        self.chirp_start_freq_SB.valueChanged.connect(self.chirp_settings_changed_callback)
+        chirp_grid.addWidget(QLabel("Start:"),0,0)
+        chirp_grid.addWidget(self.chirp_start_freq_SB,0,1)
 
         # end freq
-        self.endFreqSB = QSpinBox()
-        self.endFreqSB.setSuffix(" kHz")
-        self.endFreqSB.setRange(0,300)
-        self.endFreqSB.setValue(150)
-        gridLay2.addWidget(QLabel("End Frequency:"),1,0)
-        gridLay2.addWidget(self.endFreqSB,1,1)
+        self.chirp_stop_freq_SB = QSpinBox()
+        self.chirp_stop_freq_SB.setSuffix(" kHz")
+        self.chirp_stop_freq_SB.setRange(0,300)
+        self.chirp_stop_freq_SB.setValue(150)
+        self.chirp_stop_freq_SB.valueChanged.connect(self.chirp_settings_changed_callback)
+        chirp_grid.addWidget(QLabel("Stop:"),1,0)
+        chirp_grid.addWidget(self.chirp_stop_freq_SB,1,1)
 
-        # time for microcontroller to sample
-        self.samplePeriodSB = QSpinBox()
-        self.samplePeriodSB.setValue(1)
-        self.samplePeriodSB.setSuffix(" uS")
-        gridLay2.addWidget(QLabel("Sample Period:"),0,2)
-        gridLay2.addWidget(self.samplePeriodSB,0,3)
-
-        # num of ADC samples
-        self.numADCSamplesSB = QSpinBox()
-        self.numADCSamplesSB.setRange(1,20000)
-        self.numADCSamplesSB.setValue(8000)
-        gridLay2.addWidget(QLabel("Number ADC Samples:"),1,2)
-        gridLay2.addWidget(self.numADCSamplesSB,1,3)
+        # length of chirp
+        self.chirp_duration_SB = QSpinBox()
+        self.chirp_duration_SB.setValue(1)
+        self.chirp_duration_SB.setSuffix(" mS")
+        self.chirp_duration_SB.valueChanged.connect(self.chirp_settings_changed_callback)
+        chirp_grid.addWidget(QLabel("Duration:"),0,2)
+        chirp_grid.addWidget(self.chirp_duration_SB,0,3)
         
+        # type of chirp
+        self.chirp_type_CB = QComboBox()
+        self.chirp_type_CB.addItem('linear')
+        self.chirp_type_CB.addItem('quadratic')
+        self.chirp_type_CB.addItem('logarithmic')
+        self.chirp_type_CB.addItem('hyperbolic')
+        self.chirp_type_CB.currentTextChanged.connect(self.chirp_settings_changed_callback)
+        chirp_grid.addWidget(QLabel("Type:"),1,2)
+        chirp_grid.addWidget(self.chirp_type_CB,1,3)
+        
+        buffer_col_len = 90
+        # length of chirp buffer
+        self.chirp_buffer_length_SB = QLineEdit()
+        self.chirp_buffer_length_SB.setReadOnly(True)
+        self.chirp_buffer_length_SB.setMaximumWidth(buffer_col_len)
+        chirp_grid.addWidget(QLabel("Chirp:"),0,4)
+        chirp_grid.addWidget(self.chirp_buffer_length_SB,0,5)
+        
+        # lengthf of listen buffers
+        self.listen_buffer_length_SB = QLineEdit()
+        self.listen_buffer_length_SB.setReadOnly(True)
+        self.listen_buffer_length_SB.setMaximumWidth(buffer_col_len)
+        chirp_grid.addWidget(QLabel("Listen:"),1,4)
+        chirp_grid.addWidget(self.listen_buffer_length_SB,1,5)
+        
+        # preview chirp
+        self.preview_chirp_PB = QPushButton("Preview")
+        self.preview_chirp_PB.clicked.connect(self.preview_chirp_PB_Clicked)
+        chirp_grid.addWidget(self.preview_chirp_PB,0,6)
+        
+        # upload to board
+        self.upload_chirp_PB = QPushButton("Upload")
+        self.upload_chirp_PB.clicked.connect(self.upload_chirp_PB_Clicked)
+        chirp_grid.addWidget(self.upload_chirp_PB,1,6)
+        
+        chirp_GB.setLayout(chirp_grid)
+        
+        
+        
+        # -------------------------------------------------------------------
+        # put together two groupboxes
         hLay = QHBoxLayout()
-        hLay.addLayout(vLay)
-        hLay.addLayout(gridLay2)
+        hLay.addWidget(directory_GB)
+        hLay.addWidget(chirp_GB)
         
-        # vLay.addLayout(gridLay2)
-
-        # start button 
-        self.startCollectionPB = QPushButton("Start Collections")
-        vLay.addWidget(self.startCollectionPB)
-
+        self.chirp_settings_changed_callback()
         
-        self.experimentBox.setLayout(hLay)
-        self.mainVLay.addWidget(self.experimentBox)
+        self.experiment_settings_GB.setLayout(hLay)
+        self.mainVLay.addWidget(self.experiment_settings_GB)
+        
 
     def get_current_experiment_time(self):
         """Get the current time string that can be used as a file name or folder name"""
         return datetime.now().strftime("experiment_%m-%d-%Y_%H-%M-%S%p")
     
-    def experimentFolderNameTE_contextMenu(self,position):
+    def experiment_folder_name_TE_contextMenu(self,position):
         """Custom context menu for experiment folder name"""
         context_menu = QMenu()
         
         set_current_time = context_menu.addAction("Set Current Time")
         copy_name = context_menu.addAction("Copy")
         paste_name = context_menu.addAction("Paste")
-        # action = context_menu.exec(self.experimentFolderNameTE.viewport().mapToGlobal(position))
-        action = context_menu.exec(self.experimentFolderNameTE.mapToGlobal(position))
+        # action = context_menu.exec(self.experiment_folder_name_TE.viewport().mapToGlobal(position))
+        action = context_menu.exec(self.experiment_folder_name_TE.mapToGlobal(position))
         
         if action == set_current_time:
-            self.experimentFolderNameTE.setText(self.get_current_experiment_time())
+            self.experiment_folder_name_TE.setText(self.get_current_experiment_time())
+            
+    
+    # callback
+    def preview_chirp_PB_Clicked(self):
+        """_summary_
+        """
+        logging.debug("preview_chirp_PB_Clicked")
+        
 
+        plt.close('Chirp Preview')
+        plt.figure("Chirp Preview")
+        
+        duration = self.chirp_duration_SB.value() * 1e-3
+        start = self.chirp_start_freq_SB.value() * 1e3
+        stop = self.chirp_stop_freq_SB.value() * 1e3
+        method = self.chirp_type_CB.currentText()
+        sample_rate = 1e6  # Define your desired sample rate (1 MHz in this case)
+        t = np.arange(0, duration, 1 / sample_rate)
+
+        y_chirp = signal.chirp(t, f0=start, f1=stop, t1=t[-1], method=method)
+
+        # Plotting the spectrogram
+        plt.specgram(y_chirp, Fs=sample_rate)
+        plt.xlabel('Time (s)')
+        plt.ylabel('Frequency (Hz)')
+        plt.title('Spectrogram of Chirp Signal')
+        plt.colorbar(label='Intensity')
+        plt.show()
+
+
+    def upload_chirp_PB_Clicked(self):
+        """ when clicked"""
+        logging.debug("upload_chirp_PB_Clicked")
+        print(plt.get_figlabels())
+        
+    def chirp_settings_changed_callback(self):
+        open_figures = plt.get_figlabels()
+        
+        duration = self.chirp_duration_SB.value()
+        
+        # display chirp buffer length
+        chirp_len = duration*1e-3*1e6
+        self.chirp_buffer_length_SB.setText(f"{chirp_len:.0f}")
+        
+        # display listen buffer length
+        listen_buffer_len = np.floor((80000 - chirp_len)/2)
+        listen_buffer_time = listen_buffer_len*1e-3
+        self.listen_buffer_length_SB.setText(f"{listen_buffer_len:.0f} {listen_buffer_time:.1f} mS")
+        
+        
+        if 'Chirp Preview' in open_figures:
+            self.preview_chirp_PB_Clicked()
+        
+        
 #----------------------------------------------------------------------
-    def add_pinnaeControlBox_layout(self):
+    def Add_Pinnae_Control_GB(self):
         """Adds the controls box layout"""
         # self.pinnaeControlBox = QGroupBox("Pinnae Control")
         # controlsHLay = QHBoxLayout()
@@ -397,13 +457,6 @@ class Widget(QWidget):
         
         self.pinnae_controls_GB.setLayout(vertical_layout)
         self.mainVLay.addWidget(self.pinnae_controls_GB)
-        
-
-        
-
-
-
-
         
     def init_leftControls(self):
         """Creates box of left controls"""
@@ -616,8 +669,6 @@ class Widget(QWidget):
         
         # self.bothControlBox.setLayout(hLay)
         
-        
-        
     def init_singleEarTab(self):
         """inits the single ear tab"""
         vLay = QVBoxLayout()
@@ -737,7 +788,7 @@ class Widget(QWidget):
         gridLay = QGridLayout()
         # # show directory pulling from
         # self.echoPlotDirectoryCB = QComboBox()
-        # self.echoPlotDirectoryCB.addItem(self.directoryTE.text() +self.experimentFolderNameTE.text()+"/gpsdata")
+        # self.echoPlotDirectoryCB.addItem(self.directory_TE.text() +self.experiment_folder_name_TE.text()+"/gpsdata")
         # self.echoPlotDirectoryCB.setEditable(True)
         # self.echoPlotDirectoryCB.setSizePolicy(QSizePolicy.Policy.Expanding,QSizePolicy.Policy.Preferred)
         # gridLay.addWidget(QLabel("Plot Data:"),0,0)
@@ -824,7 +875,7 @@ class Widget(QWidget):
         self.gpsBox.setLayout(gridLay)
  
 
-    def Add_Sonar_Box(self):
+    def Add_Echo_GB(self):
         """adds sonar and gps box"""
         self.init_echoControl_box()
 
@@ -834,7 +885,9 @@ class Widget(QWidget):
 
         self.mainVLay.addLayout(self.sonarAndGPSLay)
         
-    
+    def closeEvent(self,event):
+        plt.close('all')
+        event.accept()
         
 if __name__ == "__main__":
     app = QApplication([])
