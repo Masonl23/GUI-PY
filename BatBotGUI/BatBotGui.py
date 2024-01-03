@@ -141,7 +141,6 @@ class Widget(QWidget):
         
         gridLay.addWidget(QLabel("Experiment Folder:"),1,0)
         gridLay.addWidget(self.experimentFolderNameTE,1,1)
-
         vLay.addLayout(gridLay)
         
         # settings for chirps
@@ -241,7 +240,10 @@ class Widget(QWidget):
         # self.pinnaeControlBox.setLayout(controlsHLay)
         # self.mainVLay.addWidget(self.pinnaeControlBox)
 
-
+        self.pinnae_controls_GB = QGroupBox("Controls")
+        
+        control_h_lay = QHBoxLayout()
+        
         motor_GB = [
             QGroupBox("Motor 1"),
             QGroupBox("Motor 2"),
@@ -295,10 +297,109 @@ class Widget(QWidget):
             QSpinBox(),
             QSpinBox()
         ]
+        
+        self.motor_value_SLIDER = [
+            QSlider(Qt.Orientation.Vertical),
+            QSlider(Qt.Orientation.Vertical),
+            QSlider(Qt.Orientation.Vertical),
+            QSlider(Qt.Orientation.Vertical),
+            QSlider(Qt.Orientation.Vertical),
+            QSlider(Qt.Orientation.Vertical),
+        ]
+        
+        self.motor_set_zero_PB = [
+            QPushButton("Set Zero"),
+            QPushButton("Set Zero"),
+            QPushButton("Set Zero"),
+            QPushButton("Set Zero"),
+            QPushButton("Set Zero"),
+            QPushButton("Set Zero")
+        ]
+        
+        number_motors = 6
+        max_value = 10000
+        
+        for index in range(number_motors):
+            vertical_layout = QVBoxLayout()
+            
+            temp_CB = QGroupBox("Control")
+            
+            # 4 row by 2 columns
+            grid_lay = QGridLayout()
+            
+            # add max button
+            grid_lay.addWidget(self.motor_max_PB[index],0,0)
+            
+            # add max spinbox
+            self.motor_max_limit_SB[index].setRange(-max_value,max_value)
+            self.motor_max_limit_SB[index].setValue(180)
+            grid_lay.addWidget(self.motor_max_limit_SB[index],0,1)
+            
+            # add value spinbox
+            self.motor_value_SB[index].setRange(-max_value,max_value)
+            grid_lay.addWidget(self.motor_value_SB[index],1,0)
+            
+            # add value slider
+            self.motor_value_SLIDER[index].setMinimumHeight(100)
+            self.motor_value_SLIDER[index].setRange(-max_value,max_value)
+            self.motor_value_SLIDER[index].setValue(0)
+            grid_lay.addWidget(self.motor_value_SLIDER[index],1,1)
+            
+            # add min button
+            grid_lay.addWidget(self.motor_min_PB[index],2,0)
+            
+            # add min spinbox
+            self.motor_min_limit_SB[index].setRange(-max_value,max_value)
+            grid_lay.addWidget(self.motor_min_limit_SB[index],2,1)
+            
+            ## add the layout
+            vertical_layout.addLayout(grid_lay)
+            
+            # add set zero
+            vertical_layout.addWidget(self.motor_set_zero_PB[index])
+        
+            motor_GB[index].setMaximumWidth(160)
+            
+            motor_GB[index].setLayout(vertical_layout)
+            control_h_lay.addWidget(motor_GB[index])
+        
+        vertical_layout = QVBoxLayout()
+        vertical_layout.addLayout(control_h_lay)
+        
+        hLay = QHBoxLayout()
+        # add the instruction table
+        self.instruction_TABLE = QTableWidget(1,number_motors)
+        # vertical_layout.addWidget(self.instruction_TABLE)
+        hLay.addWidget(self.instruction_TABLE)
+        
+        
+        # create layout for buttons side of table
+        table_side_v_lay = QVBoxLayout()
+        
+        # settings for making ears realistic
+        self.realistic_ears_CB = QCheckBox("Realistic Ears")
+        self.realistic_ears_CB.setToolTip("Each ear will be out of phase if checked like a real bat")
+        table_side_v_lay.addWidget(self.realistic_ears_CB)
+        
+        # create 
+        table_side_grid = QGridLayout()
+        self.start_stop_instruction_PB = QPushButton("Start")
+        table_side_grid.addWidget(self.start_stop_instruction_PB,0,0)
+        self.intstruction_speed_SB = QSpinBox()
+        self.intstruction_speed_SB.setSuffix(" Hz")
+        table_side_grid.addWidget(self.intstruction_speed_SB,0,1)
+        
+        
+        table_side_v_lay.addLayout(table_side_grid)
 
+        hLay.addLayout(table_side_v_lay)        
+        vertical_layout.addLayout(hLay)
+        
+        self.pinnae_controls_GB.setLayout(vertical_layout)
+        self.mainVLay.addWidget(self.pinnae_controls_GB)
         
 
-
+        
 
 
 
@@ -630,7 +731,7 @@ class Widget(QWidget):
     def init_echoControl_box(self):
         """Adds the sonar box layout"""
         self.sonarControlBox = QGroupBox("Echos")
-        self.sonarControlBox.setMinimumHeight(280)
+        self.sonarControlBox.setMinimumHeight(300)
         vLay = QVBoxLayout()
 
         gridLay = QGridLayout()
